@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>WEB - 리뷰작성</title>
+   <meta charset="utf-8">
+   <link type="text/css" rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    
+    <center>
+    <h1>♬♪리뷰 작성하기♬♪</h1> 
+    <h2>REVIEW를 작성해주세요</h2>
+        
+    <form action="/review" method="post" >
+       <p><input type="text" name="title" placeholder="상품평">{{name}}</p>
+       <p><textarea name="desc" placeholder="상품명 및 상세내용을 작성해주세요">{{message}}</textarea></p>
+       <button type="submit">제출</button>
+    </form>
+    <h3>사용후기</h3>
+    <div> {{menu | safe}} </div>
+        
+    <h2><a href="/NEW"> NEW SHOP으로 이동하기</a></h2>
+    <h2><a href="/OLD"> OLD SHOP으로 이동하기</a> </h2>
+    </center>
+   
+</body>
+</html>

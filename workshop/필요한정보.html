@@ -1,0 +1,16 @@
+@app.route('/')
+def index():
+    # 로그인 상태가 아니면 
+    template = get_template('main.html')
+    
+    title = '★ Welcome!! '+ id + '★' 
+    
+    menu=get_menu()
+    return template.format(title , menu)
+
+    # 로그인 되었으면 
+    template = get_template('main2.html')
+    
+    title = '★ Welcome!!'+" "+ id + '★'
+    menu=get_menu()
+    return template.format(title, menu)

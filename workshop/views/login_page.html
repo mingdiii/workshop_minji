@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title> Shopping_mall - login</title>
+   <meta charset="utf-8">
+   <link type="text/css" rel="stylesheet" href="/static/style.css">
+    
+
+    
+</head>
+  
+    
+<body>
+    
+    <div id="main">
+    <center>
+    <h1> 쇼핑몰에 오신 것을 환영합니다 </h1>
+    <h2> ▼ 입장을 위해 로그인을 해주세요 ▼ </h2>
+    <form action="/login_page" method ="post">
+        <p><input type="text" name="id" placeholder="userid"></p>
+        <p><input type="password" name="pw" placeholder="password"></p>
+        <button type="submit"> LOGIN </button>
+    </form>
+    {{message}}
+          </center>   
+      </div>
+</body>
+    
+</html>
