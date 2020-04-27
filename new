@@ -1,0 +1,206 @@
+
+import os
+import pymysql
+from datetime import datetime
+from flask import Flask, render_template
+from flask import request, redirect, abort, session, jsonify
+
+app=Flask(__name__, static_folder="static",
+                    template_folder="views")
+
+app.config['ENV'] = 'development'
+app.config['DEBUG'] = True
+app.secret_key = 'twomin'
+
+db = pymysql.connect(
+    user='root',
+    passwd='123456',
+    host='localhost',
+    db='web',
+    charset='utf8',
+    cursorclass=pymysql.cursors.DictCursor
+)
+
+def get_menu():
+    cursor = db.cursor()
+    cursor.execute("select id, title from topic")
+    menu = [f"<li><a href='/{row['id']}'>{row['title']}</a></li>"
+            for row in cursor.fetchall()]
+    return '\n'.join(menu)
+
+def get_review():
+    menu_temp1 = "<li><a href='/reviews/{0}'>{0}</a></li>"
+    menu=[e for e in os.listdir('workshop_content/Review') if e[0] != '.']
+    return "\n".join([menu_temp1.format(m) for m in menu])
+
+
+
+@app.route('/')
+def index():
+    if 'user' in session:
+        title = '★ Welcome!! ' + session['user']['name']+ '★'
+    else:
+        title = 'Welcome'
+        
+    return render_template('main.html',
+                           id = "",
+                           title=title,
+                           menu=get_menu())
+
+@app.route('/main2')
+def main2():
+    if 'user' in session:
+        title = '★ Welcome!! ' + session['user']['name']+ '★'
+    else:
+        title = 'Welcome'
+        
+    return render_template('main2.html',
+                           title=title,
+                           id = "",
+                           menu=get_menu())
+
+
+# @app.route('/<title>')
+# def html(title):
+   
+#     return render_template(f'{title}.html',
+#                            title=title,
+#                            menu=get_menu())
+
+
+@app.route("/<id>")
+def content(id):
+    cursor = db.cursor()
+    cursor.execute(f"select * from topic where id = '{id}'")
+    topic = cursor.fetchone()
+    
+    if topic is None:#토픽이 없으면
+        abort(404)
+        
+    
+    return render_template('main2.html', #토픽이 있으면
+                           id = topic ['id'],
+                           title=topic['title'],
+                            content=topic['description'],
+                           menu=get_menu())
+
+
+    
+# @app.route("/delete/<title>")
+# def delete(title):
+#     os.remove(f"content/{title}")
+#     return redirect("/")
+
+@app.route("/reviews/<title>")
+def reviews(title):
+    menu=get_review()
+    with open(f'workshop_content/Review/{title}', 'r', encoding="utf-8") as f:
+        content = f.read()
+  
+    return render_template('review.html', 
+                            content=content, 
+                            menu=menu)
+
+
+@app.route("/review", methods=['GET', 'POST'])
+def review():
+   
+    if request.method=="GET":
+        return render_template('review.html', 
+                               message='', 
+                               menu=get_review(),
+                               name='')
+    
+    elif request.method=="POST":
+ 
+        cursor = db.cursor()
+        sql = f"""
+            insert into topic (title, description, created, author_id)
+            values ('{request.form['title']}', '{request.form['desc']}',
+                    '{datetime.now()}', '4')
+        """
+        cursor.execute(sql)
+        db.commit() #pymysql 문법
+
+        return redirect('/review')
+    
+
+# @app.route("/delete/<title>")
+# def delete(title):
+#     os.remove(f'workshop_content/Review/{title}')
+#     return redirect("/review")
+    
+ 
+       
+    
+# @app.route('/login_page', methods=['GET', 'POST'])
+# def login():
+    
+#     message = ""
+#     if request.method == 'POST':
+#         m= [e for e in members if e['id']== request.form['id']]
+        
+#         if len(m) ==0:
+#             message = "회원이 아닙니다."
+            
+#         elif request.form['pw'] != m[0]['pw']:
+#             message = "패스워드를 확인해 주세요" #<p>넣으면 왜 뜨지?
+            
+#         else:
+#             session['user'] = m[0]
+#             return redirect("/main2")
+
+#     return render_template('login_page.html', 
+#                                message=message, 
+#                                menu=get_menu())
+
+
+@app.route("/login_page", methods=['GET', 'POST'])
+def login():
+    message = ""
+    if request.method == 'POST':
+        cursor = db.cursor()
+        cursor.execute(f"""
+            select id, name, profile, password from author 
+            where name = '{request.form['id']}'""")
+        user = cursor.fetchone()
+        
+        if user is None:
+            message = "회원이 아닙니다."
+        else:
+            cursor.execute(f"""
+            select id, name, profile, password from author 
+            where name = '{request.form['id']}' and 
+                  password = SHA2('{request.form['pw']}', 256)""")
+            user = cursor.fetchone()
+            
+            if user is None:
+                message = "패스워드를 확인해 주세요"
+            else:
+                # 로그인 성공에는 메인으로
+                session['user'] = user
+                return redirect("/main2")
+    
+    return render_template('login_page.html', 
+                           message=message)
+
+ 
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect('/')
+    
+
+@app.route("/favicon.ico")
+def favicon():
+    return abort(404)
+
+
+@app.route("/dbtest")
+def dbtest():
+    cursor = db.cursor()
+    cursor.execute("select * from topic")
+    return str(cursor.fetchall())
+    
+app.run(port=5001)
